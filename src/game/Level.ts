@@ -1,5 +1,4 @@
 import { LevelConfig, CardType } from '../types';
-import { CARD_TYPES } from '../constants';
 
 export class Level {
   private static levels: LevelConfig[] = [
@@ -20,23 +19,37 @@ export class Level {
     {
       id: 3,
       layers: 3,
-      cardTypes: CARD_TYPES.slice(0, 6),
+      cardTypes: [CardType.Heart, CardType.Kiss, CardType.Rose, CardType.Begonia, CardType.Star, CardType.Moon],
       cardsPerType: 3,
       name: '浪漫',
     },
     {
       id: 4,
       layers: 4,
-      cardTypes: CARD_TYPES.slice(0, 6),
+      cardTypes: [CardType.Heart, CardType.Kiss, CardType.Rose, CardType.Begonia, CardType.Star, CardType.Moon, CardType.Gift],
       cardsPerType: 3,
       name: '甜蜜',
     },
     {
       id: 5,
       layers: 4,
-      cardTypes: CARD_TYPES,
+      cardTypes: [CardType.Heart, CardType.Kiss, CardType.Rose, CardType.Begonia, CardType.Star, CardType.Moon, CardType.Gift, CardType.Gem],
       cardsPerType: 3,
       name: '永恒',
+    },
+    {
+      id: 6,
+      layers: 5,
+      cardTypes: [CardType.Heart, CardType.Kiss, CardType.Rose, CardType.Begonia, CardType.Star, CardType.Moon, CardType.Gift, CardType.Gem],
+      cardsPerType: 3,
+      name: '挑战',
+    },
+    {
+      id: 7,
+      layers: 5,
+      cardTypes: [CardType.Heart, CardType.Kiss, CardType.Rose, CardType.Begonia, CardType.Star, CardType.Moon, CardType.Gift, CardType.Gem],
+      cardsPerType: 3,
+      name: '极限',
     },
   ];
 
