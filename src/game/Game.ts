@@ -22,6 +22,7 @@ export class Game {
   private propManager: PropManager;
   private audioManager: AudioManager;
   private settingsPanel: SettingsPanel;
+  private settingsPanelElement: HTMLElement | null = null;
   private handleClickBound: (e: MouseEvent) => void;
   private handleTouchBound: (e: TouchEvent) => void;
 
@@ -38,7 +39,8 @@ export class Game {
     // Initialize ThemeManager singleton for SettingsPanel to use
     ThemeManager.getInstance();
     this.settingsPanel = new SettingsPanel();
-    document.body.appendChild(this.settingsPanel.getElement());
+    this.settingsPanelElement = this.settingsPanel.getElement();
+    document.body.appendChild(this.settingsPanelElement);
 
     this.handleClickBound = this.handleClick.bind(this);
     this.handleTouchBound = this.handleTouch.bind(this);
@@ -330,5 +332,9 @@ export class Game {
   destroy(): void {
     this.canvas.removeEventListener('click', this.handleClickBound);
     this.canvas.removeEventListener('touchstart', this.handleTouchBound);
+    if (this.settingsPanelElement?.parentNode) {
+      this.settingsPanelElement.parentNode.removeChild(this.settingsPanelElement);
+      this.settingsPanelElement = null;
+    }
   }
 }
