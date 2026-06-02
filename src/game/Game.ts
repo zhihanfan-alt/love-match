@@ -13,12 +13,19 @@ export class Game {
   private currentLevel: number = 1;
   private score: number = 0;
   private lastTime: number = 0;
+  private handleClickBound: (e: MouseEvent) => void;
+  private handleTouchBound: (e: TouchEvent) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get canvas context');
+    this.ctx = ctx;
     this.board = new Board(2, []);
     this.slot = new Slot();
+
+    this.handleClickBound = this.handleClick.bind(this);
+    this.handleTouchBound = this.handleTouch.bind(this);
 
     this.setupCanvas();
     this.setupEventListeners();
@@ -30,8 +37,8 @@ export class Game {
   }
 
   private setupEventListeners(): void {
-    this.canvas.addEventListener('click', this.handleClick.bind(this));
-    this.canvas.addEventListener('touchstart', this.handleTouch.bind(this));
+    this.canvas.addEventListener('click', this.handleClickBound);
+    this.canvas.addEventListener('touchstart', this.handleTouchBound);
   }
 
   private handleClick(e: MouseEvent): void {
@@ -44,6 +51,7 @@ export class Game {
 
   private handleTouch(e: TouchEvent): void {
     e.preventDefault();
+    if (e.touches.length === 0) return;
     const rect = this.canvas.getBoundingClientRect();
     const touch = e.touches[0];
     const x = (touch.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
@@ -65,6 +73,12 @@ export class Game {
       return;
     }
 
+    // Check if slot is full BEFORE checking matches
+    if (this.slot.isFull()) {
+      this.gameOver();
+      return;
+    }
+
     // Remove from board
     this.board.removeCard(card);
 
@@ -74,6 +88,7 @@ export class Game {
 
   private checkMatches(): void {
     const cards = this.slot.getCards();
+    if (cards.length === 0) return;
     const lastCard = cards[cards.length - 1];
     const matching = cards.filter(c => c.type === lastCard.type);
 
@@ -86,11 +101,6 @@ export class Game {
       if (this.board.getCards().length === 0) {
         this.levelComplete();
       }
-    }
-
-    // Check if slot is full
-    if (this.slot.isFull()) {
-      this.gameOver();
     }
   }
 
@@ -186,5 +196,10 @@ export class Game {
 
   setState(state: GameState): void {
     this.state = state;
+  }
+
+  destroy(): void {
+    this.canvas.removeEventListener('click', this.handleClickBound);
+    this.canvas.removeEventListener('touchstart', this.handleTouchBound);
   }
 }
