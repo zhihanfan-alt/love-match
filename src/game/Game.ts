@@ -3,6 +3,9 @@ import { Slot } from './Slot';
 import { Level } from './Level';
 import { GameState } from '../types';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS } from '../constants';
+import { EasterEggManager } from '../easter-eggs/EasterEggManager';
+import { PropManager } from '../props/PropManager';
+import { AudioManager } from '../audio/AudioManager';
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -13,6 +16,9 @@ export class Game {
   private currentLevel: number = 1;
   private score: number = 0;
   private lastTime: number = 0;
+  private easterEggManager: EasterEggManager;
+  private propManager: PropManager;
+  private audioManager: AudioManager;
   private handleClickBound: (e: MouseEvent) => void;
   private handleTouchBound: (e: TouchEvent) => void;
 
@@ -23,6 +29,9 @@ export class Game {
     this.ctx = ctx;
     this.board = new Board(2, []);
     this.slot = new Slot();
+    this.easterEggManager = new EasterEggManager();
+    this.propManager = new PropManager();
+    this.audioManager = AudioManager.getInstance();
 
     this.handleClickBound = this.handleClick.bind(this);
     this.handleTouchBound = this.handleTouch.bind(this);
@@ -97,6 +106,9 @@ export class Game {
     // Remove from board
     this.board.removeCard(card);
 
+    // Play click sound
+    this.audioManager.playSound('click');
+
     // Check for matches FIRST (may free up slot space)
     this.checkMatches();
 
@@ -117,6 +129,12 @@ export class Game {
       this.slot.removeCards(lastCard.type);
       this.score += 100;
 
+      // Trigger easter egg
+      this.easterEggManager.trigger(lastCard.type);
+
+      // Play match sound
+      this.audioManager.playSound('match');
+
       // Check level complete
       if (this.board.getCards().length === 0) {
         this.levelComplete();
@@ -135,10 +153,12 @@ export class Game {
 
   private levelComplete(): void {
     this.state = GameState.LevelComplete;
+    this.audioManager.playSound('level-complete');
   }
 
   private gameOver(): void {
     this.state = GameState.GameOver;
+    this.audioManager.playSound('game-over');
   }
 
   update(timestamp: number): void {
@@ -153,6 +173,8 @@ export class Game {
 
     if (this.state === GameState.Playing) {
       this.board.update(deltaTime);
+      this.easterEggManager.update(deltaTime);
+      this.propManager.update(deltaTime);
     }
   }
 
@@ -171,6 +193,7 @@ export class Game {
       this.board.render(this.ctx);
       this.slot.render(this.ctx);
       this.renderHUD();
+      this.easterEggManager.render(this.ctx);
     }
 
     // Menu
