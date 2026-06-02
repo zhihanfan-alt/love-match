@@ -6,6 +6,8 @@ import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS } from '../constants';
 import { EasterEggManager } from '../easter-eggs/EasterEggManager';
 import { PropManager } from '../props/PropManager';
 import { AudioManager } from '../audio/AudioManager';
+import { ThemeManager } from '../themes/ThemeManager';
+import { SettingsPanel } from '../ui/SettingsPanel';
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -19,6 +21,7 @@ export class Game {
   private easterEggManager: EasterEggManager;
   private propManager: PropManager;
   private audioManager: AudioManager;
+  private settingsPanel: SettingsPanel;
   private handleClickBound: (e: MouseEvent) => void;
   private handleTouchBound: (e: TouchEvent) => void;
 
@@ -32,6 +35,10 @@ export class Game {
     this.easterEggManager = new EasterEggManager();
     this.propManager = new PropManager();
     this.audioManager = AudioManager.getInstance();
+    // Initialize ThemeManager singleton for SettingsPanel to use
+    ThemeManager.getInstance();
+    this.settingsPanel = new SettingsPanel();
+    document.body.appendChild(this.settingsPanel.getElement());
 
     this.handleClickBound = this.handleClick.bind(this);
     this.handleTouchBound = this.handleTouch.bind(this);
@@ -70,6 +77,12 @@ export class Game {
   }
 
   private handleInteraction(x: number, y: number): void {
+    // Check if settings button clicked (any state)
+    if (x >= CANVAS_WIDTH - 60 && x <= CANVAS_WIDTH - 20 && y >= 20 && y <= 60) {
+      this.settingsPanel.toggle();
+      return;
+    }
+
     // Menu state: start level 1 on any click
     if (this.state === GameState.Menu) {
       this.startLevel(1);
@@ -245,6 +258,18 @@ export class Game {
     this.ctx.fillStyle = COLORS.textWhite;
     this.ctx.font = 'bold 20px PingFang SC';
     this.ctx.fillText('开始', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 70);
+
+    // Settings button
+    this.ctx.fillStyle = COLORS.accent;
+    this.ctx.beginPath();
+    this.ctx.roundRect(CANVAS_WIDTH - 60, 20, 40, 40, 20);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = COLORS.textWhite;
+    this.ctx.font = '20px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText('⚙', CANVAS_WIDTH - 40, 40);
 
     this.ctx.restore();
   }
