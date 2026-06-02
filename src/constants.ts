@@ -22,37 +22,37 @@ export const BOARD_COLS = 6;
 export const BOARD_ROWS = 7;
 export const BOARD_START_Y = 200;
 
-// Theme colours – romantic / cute palette
+// Theme colours – Arctic Aurora palette
 export const COLORS = {
   // Backgrounds
-  bgGradientStart: "#FFB7C5",
-  bgGradientEnd: "#DDA0DD",
-  cardBg: "#FFFFFF",
-  cardBgRevealed: "#FFF0F5",
-  slotBg: "rgba(255, 255, 255, 0.3)",
-  slotActive: "rgba(255, 105, 180, 0.4)",
+  bgGradientStart: "#0a1628",
+  bgGradientEnd: "#1a2a4a",
+  cardBg: "rgba(255, 255, 255, 0.9)",
+  cardBgRevealed: "rgba(255, 255, 255, 0.95)",
+  slotBg: "rgba(255, 255, 255, 0.15)",
+  slotActive: "rgba(100, 200, 255, 0.3)",
 
-  // Card type accent colours
-  heart: "#FF4D6A",
-  kiss: "#FF69B4",
-  rose: "#E84057",
-  begonia: "#FF6B81",
-  star: "#FFD700",
-  moon: "#C0A0FF",
-  gift: "#FF85A2",
-  gem: "#7EC8E3",
+  // Card type accent colours - Aurora colors
+  heart: "#ff6b9d",
+  kiss: "#c084fc",
+  rose: "#f472b6",
+  begonia: "#fb923c",
+  star: "#fbbf24",
+  moon: "#818cf8",
+  gift: "#34d399",
+  gem: "#22d3ee",
 
   // Text
-  textPrimary: "#D63384",
-  textWhite: "#FFFFFF",
-  textDark: "#4A2040",
+  textPrimary: "#e2e8f0",
+  textWhite: "#ffffff",
+  textDark: "#1e293b",
 
   // UI
-  buttonPrimary: "#FF69B4",
-  buttonHover: "#FF85C8",
-  shadow: "rgba(214, 51, 132, 0.25)",
-  cardShadow: "rgba(214, 51, 132, 0.25)",
-  accent: "#FFB7C5",
+  buttonPrimary: "rgba(100, 200, 255, 0.6)",
+  buttonHover: "rgba(100, 200, 255, 0.8)",
+  shadow: "rgba(0, 0, 0, 0.3)",
+  cardShadow: "rgba(0, 0, 0, 0.2)",
+  accent: "rgba(100, 200, 255, 0.8)",
 } as const;
 
 // All available card types (8 total)

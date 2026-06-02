@@ -1,11 +1,11 @@
 :root {
-  --color-primary: #FFB7C5;
-  --color-secondary: #DDA0DD;
-  --color-accent: #FF69B4;
-  --color-background: linear-gradient(135deg, #FFB7C5 0%, #DDA0DD 100%);
-  --color-card-bg: #FFFFFF;
-  --color-text: #333333;
-  --color-text-white: #FFFFFF;
-  --color-slot-bg: rgba(255,255,255,0.3);
-  --color-border: #FF69B4;
+  --color-primary: #0a1628;
+  --color-secondary: #1a2a4a;
+  --color-accent: rgba(100, 200, 255, 0.8);
+  --color-background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);
+  --color-card-bg: rgba(255, 255, 255, 0.9);
+  --color-text: #e2e8f0;
+  --color-text-white: #ffffff;
+  --color-slot-bg: rgba(255, 255, 255, 0.15);
+  --color-border: rgba(100, 200, 255, 0.6);
 }

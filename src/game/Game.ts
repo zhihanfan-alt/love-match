@@ -29,6 +29,8 @@ export class Game {
   private handleTouchBound: (e: TouchEvent) => void;
   private hintTimer: number = 0;
   private isHintActive: boolean = false;
+  // Snow particles
+  private snowflakes: Array<{x: number, y: number, size: number, speed: number, opacity: number}> = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -54,6 +56,44 @@ export class Game {
 
     this.setupCanvas();
     this.setupEventListeners();
+    this.initSnowflakes();
+  }
+
+  private initSnowflakes(): void {
+    // Create 50 snowflakes
+    for (let i = 0; i < 50; i++) {
+      this.snowflakes.push({
+        x: Math.random() * CANVAS_WIDTH,
+        y: Math.random() * CANVAS_HEIGHT,
+        size: Math.random() * 3 + 1,
+        speed: Math.random() * 1 + 0.5,
+        opacity: Math.random() * 0.6 + 0.2,
+      });
+    }
+  }
+
+  private updateSnowflakes(deltaTime: number): void {
+    this.snowflakes.forEach(flake => {
+      flake.y += flake.speed * deltaTime * 60;
+      flake.x += Math.sin(flake.y * 0.01) * 0.5;
+
+      // Reset snowflake when it goes off screen
+      if (flake.y > CANVAS_HEIGHT) {
+        flake.y = -10;
+        flake.x = Math.random() * CANVAS_WIDTH;
+      }
+    });
+  }
+
+  private renderSnowflakes(): void {
+    this.ctx.save();
+    this.snowflakes.forEach(flake => {
+      this.ctx.beginPath();
+      this.ctx.arc(flake.x, flake.y, flake.size, 0, Math.PI * 2);
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${flake.opacity})`;
+      this.ctx.fill();
+    });
+    this.ctx.restore();
   }
 
   private onThemeChanged(): void {
@@ -278,6 +318,9 @@ export class Game {
     const deltaTime = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
+    // Update snowflakes always
+    this.updateSnowflakes(deltaTime);
+
     if (this.state === GameState.Playing) {
       this.board.update(deltaTime);
       this.easterEggManager.update(deltaTime);
@@ -309,6 +352,9 @@ export class Game {
     gradient.addColorStop(1, theme.colors.secondary);
     this.ctx.fillStyle = gradient;
     this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Render snowflakes
+    this.renderSnowflakes();
 
     // Game elements
     if (this.state === GameState.Playing || this.state === GameState.Paused) {
