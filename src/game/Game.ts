@@ -61,6 +61,30 @@ export class Game {
   }
 
   private handleInteraction(x: number, y: number): void {
+    // Menu state: start level 1 on any click
+    if (this.state === GameState.Menu) {
+      this.startLevel(1);
+      return;
+    }
+
+    // Game Over: click to restart current level
+    if (this.state === GameState.GameOver) {
+      this.startLevel(this.currentLevel);
+      return;
+    }
+
+    // Level Complete: click to advance to next level
+    if (this.state === GameState.LevelComplete) {
+      const nextLevel = this.currentLevel + 1;
+      if (nextLevel <= Level.getTotalLevels()) {
+        this.startLevel(nextLevel);
+      } else {
+        // All levels beaten, return to menu
+        this.state = GameState.Menu;
+      }
+      return;
+    }
+
     if (this.state !== GameState.Playing) return;
 
     const card = this.board.getCardAtPosition(x, y);
@@ -68,22 +92,18 @@ export class Game {
 
     // Add to slot
     const added = this.slot.addCard(card);
-    if (!added) {
-      this.gameOver();
-      return;
-    }
-
-    // Check if slot is full BEFORE checking matches
-    if (this.slot.isFull()) {
-      this.gameOver();
-      return;
-    }
+    if (!added) return; // slot animation in progress, ignore
 
     // Remove from board
     this.board.removeCard(card);
 
-    // Check for matches
+    // Check for matches FIRST (may free up slot space)
     this.checkMatches();
+
+    // Only game over if slot is still full after match check
+    if (this.slot.isFull()) {
+      this.gameOver();
+    }
   }
 
   private checkMatches(): void {
@@ -115,15 +135,19 @@ export class Game {
 
   private levelComplete(): void {
     this.state = GameState.LevelComplete;
-    // TODO: Show level complete UI
   }
 
   private gameOver(): void {
     this.state = GameState.GameOver;
-    // TODO: Show game over UI
   }
 
   update(timestamp: number): void {
+    // Skip first frame to avoid huge deltaTime
+    if (this.lastTime === 0) {
+      this.lastTime = timestamp;
+      return;
+    }
+
     const deltaTime = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
@@ -152,6 +176,18 @@ export class Game {
     // Menu
     if (this.state === GameState.Menu) {
       this.renderMenu();
+    }
+
+    // Game Over
+    if (this.state === GameState.GameOver) {
+      this.board.render(this.ctx);
+      this.slot.render(this.ctx);
+      this.renderGameOver();
+    }
+
+    // Level Complete
+    if (this.state === GameState.LevelComplete) {
+      this.renderLevelComplete();
     }
   }
 
@@ -186,6 +222,51 @@ export class Game {
     this.ctx.fillStyle = COLORS.textWhite;
     this.ctx.font = 'bold 20px PingFang SC';
     this.ctx.fillText('开始', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 70);
+
+    this.ctx.restore();
+  }
+
+  private renderGameOver(): void {
+    this.ctx.save();
+
+    // Semi-transparent overlay
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Game Over text
+    this.ctx.fillStyle = COLORS.textWhite;
+    this.ctx.font = 'bold 48px PingFang SC';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('游戏结束', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3);
+
+    this.ctx.font = '20px PingFang SC';
+    this.ctx.fillText(`最终分数: ${this.score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 + 60);
+    this.ctx.fillText('点击重新开始', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 + 110);
+
+    this.ctx.restore();
+  }
+
+  private renderLevelComplete(): void {
+    this.ctx.save();
+
+    // Semi-transparent overlay
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Level Complete text
+    this.ctx.fillStyle = COLORS.textWhite;
+    this.ctx.font = 'bold 48px PingFang SC';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('恭喜过关!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3);
+
+    this.ctx.font = '20px PingFang SC';
+    this.ctx.fillText(`分数: ${this.score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 + 60);
+
+    if (this.currentLevel < Level.getTotalLevels()) {
+      this.ctx.fillText('点击进入下一关', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 + 110);
+    } else {
+      this.ctx.fillText('恭喜通关! 点击返回主菜单', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 + 110);
+    }
 
     this.ctx.restore();
   }

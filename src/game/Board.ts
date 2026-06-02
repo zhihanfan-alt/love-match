@@ -48,15 +48,26 @@ export class Board {
   }
 
   private selectTypesForLayer(count: number): CardType[] {
-    const types: CardType[] = [];
-    const availableTypes = [...this.cardTypes];
+    // count is always a multiple of 3 (guaranteed by caller)
+    // Distribute count cards so each type appears in multiples of 3
+    const numTypes = this.cardTypes.length;
+    const totalTriplets = Math.floor(count / 3);
+    const tripletsPerType = Math.floor(totalTriplets / numTypes);
+    let extraTriplets = totalTriplets - tripletsPerType * numTypes;
 
-    while (types.length < count) {
-      const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-      types.push(type, type, type); // Always add 3 of same type
+    const types: CardType[] = [];
+    for (const type of this.cardTypes) {
+      let tripletCount = tripletsPerType;
+      if (extraTriplets > 0) {
+        tripletCount++;
+        extraTriplets--;
+      }
+      for (let i = 0; i < tripletCount * 3; i++) {
+        types.push(type);
+      }
     }
 
-    // Shuffle
+    // Shuffle (Fisher-Yates)
     for (let i = types.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [types[i], types[j]] = [types[j], types[i]];
