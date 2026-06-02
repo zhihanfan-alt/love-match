@@ -16,6 +16,8 @@ export class Card implements CardData {
   private isAnimating: boolean = false;
   private scale: number = 1;
   private opacity: number = 1;
+  private clickAnimation: number = 0;
+  private isClickAnimating: boolean = false;
 
   constructor(id: number, type: CardType, position: Position, layer: number) {
     this.id = id;
@@ -28,18 +30,34 @@ export class Card implements CardData {
   }
 
   update(deltaTime: number): void {
-    if (!this.isAnimating) return;
+    // Update position animation
+    if (this.isAnimating) {
+      this.animationProgress += deltaTime * ANIMATION_SPEED;
+      if (this.animationProgress >= 1) {
+        this.animationProgress = 1;
+        this.isAnimating = false;
+        this.position = { ...this.targetPosition };
+      }
 
-    this.animationProgress += deltaTime * ANIMATION_SPEED;
-    if (this.animationProgress >= 1) {
-      this.animationProgress = 1;
-      this.isAnimating = false;
-      this.position = { ...this.targetPosition };
+      const t = Card.easeOutCubic(this.animationProgress);
+      this.position.x = Card.lerp(this.startPosition.x, this.targetPosition.x, t);
+      this.position.y = Card.lerp(this.startPosition.y, this.targetPosition.y, t);
     }
 
-    const t = Card.easeOutCubic(this.animationProgress);
-    this.position.x = Card.lerp(this.startPosition.x, this.targetPosition.x, t);
-    this.position.y = Card.lerp(this.startPosition.y, this.targetPosition.y, t);
+    // Update click animation
+    if (this.isClickAnimating) {
+      this.clickAnimation -= deltaTime * 8;
+      if (this.clickAnimation <= 0) {
+        this.clickAnimation = 0;
+        this.isClickAnimating = false;
+      }
+      this.scale = 1 + this.clickAnimation * 0.2;
+    }
+  }
+
+  playClickAnimation(): void {
+    this.clickAnimation = 1;
+    this.isClickAnimating = true;
   }
 
   render(ctx: CanvasRenderingContext2D): void {

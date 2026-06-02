@@ -6,6 +6,9 @@ export class Board {
   private cards: Card[] = [];
   private layers: number;
   private cardTypes: CardType[];
+  private sortedForHitTest: Card[] | null = null;
+  private sortedForRender: Card[] | null = null;
+  private needsSort: boolean = true;
 
   constructor(layers: number, cardTypes: CardType[]) {
     this.layers = layers;
@@ -14,6 +17,7 @@ export class Board {
 
   generate(): void {
     this.cards = [];
+    this.needsSort = true;
     let cardId = 0;
 
     for (let layer = 0; layer < this.layers; layer++) {
@@ -77,11 +81,11 @@ export class Board {
   }
 
   getCardAtPosition(x: number, y: number): Card | null {
-    // Check from top layer to bottom
-    const sortedCards = [...this.cards].sort((a, b) => b.layer - a.layer);
+    this.updateSortedArrays();
+    if (!this.sortedForHitTest) return null;
 
-    for (const card of sortedCards) {
-      if (!card.isRemoved && card.containsPoint(x, y)) {
+    for (const card of this.sortedForHitTest) {
+      if (card.containsPoint(x, y)) {
         // Check if card is accessible (not covered by others)
         if (this.isCardAccessible(card)) {
           return card;
@@ -117,10 +121,20 @@ export class Board {
 
   removeCard(card: Card): void {
     card.isRemoved = true;
+    this.needsSort = true;
   }
 
   getCards(): Card[] {
     return this.cards.filter(c => !c.isRemoved);
+  }
+
+  private updateSortedArrays(): void {
+    if (!this.needsSort) return;
+
+    const activeCards = this.cards.filter(c => !c.isRemoved);
+    this.sortedForHitTest = [...activeCards].sort((a, b) => b.layer - a.layer);
+    this.sortedForRender = [...activeCards].sort((a, b) => a.layer - b.layer);
+    this.needsSort = false;
   }
 
   update(deltaTime: number): void {
@@ -128,8 +142,7 @@ export class Board {
   }
 
   render(ctx: CanvasRenderingContext2D): void {
-    // Render from bottom layer to top
-    const sortedCards = [...this.cards].sort((a, b) => a.layer - b.layer);
-    sortedCards.forEach(card => card.render(ctx));
+    this.updateSortedArrays();
+    this.sortedForRender?.forEach(card => card.render(ctx));
   }
 }

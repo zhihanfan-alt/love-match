@@ -18,8 +18,8 @@ export const SLOT_HEIGHT = 80;
 export const SLOT_CARD_SIZE = 50;
 
 // Board layout
-export const BOARD_COLS = 7;
-export const BOARD_ROWS = 8;
+export const BOARD_COLS = 6;
+export const BOARD_ROWS = 7;
 export const BOARD_START_Y = 200;
 
 // Theme colours – romantic / cute palette
