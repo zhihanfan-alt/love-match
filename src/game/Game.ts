@@ -172,7 +172,7 @@ export class Game {
       return;
     }
 
-    if (this.state !== GameState.Playing) return;
+    if (this.state !== GameState.Playing && this.state !== GameState.Paused) return;
 
     // Check control buttons
     const buttonSize = 40;
