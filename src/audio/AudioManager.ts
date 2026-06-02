@@ -115,4 +115,8 @@ export class AudioManager {
     this.setMuted(!this.isMuted);
     return this.isMuted;
   }
+
+  getIsMuted(): boolean {
+    return this.isMuted;
+  }
 }
