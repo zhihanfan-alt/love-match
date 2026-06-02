@@ -1,33 +1,21 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS } from "./constants";
-import { GameState } from "./types";
+import { Game } from './game/Game';
+import { GameState } from './types';
 
-// Bootstrap the game canvas
-const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d")!;
+const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+const game = new Game(canvas);
 
-// Set logical size to match constants
-canvas.width = CANVAS_WIDTH;
-canvas.height = CANVAS_HEIGHT;
+// Handle menu click
+canvas.addEventListener('click', () => {
+  if (game.getState() === GameState.Menu) {
+    game.startLevel(1);
+  }
+});
 
-let gameState: GameState = GameState.Menu;
-
-function render() {
-  // Background gradient
-  const gradient = ctx.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-  gradient.addColorStop(0, COLORS.bgGradientStart);
-  gradient.addColorStop(1, COLORS.bgGradientEnd);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-  // Placeholder title text
-  ctx.fillStyle = COLORS.textWhite;
-  ctx.font = "bold 36px 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("Love Match", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 20);
-  ctx.font = "18px 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  ctx.fillText("Tap to Start", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30);
+// Game loop
+function gameLoop(timestamp: number): void {
+  game.update(timestamp);
+  game.render();
+  requestAnimationFrame(gameLoop);
 }
 
-render();
-
-console.log(`Game state: ${gameState}`);
+requestAnimationFrame(gameLoop);
