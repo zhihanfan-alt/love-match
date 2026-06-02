@@ -305,6 +305,9 @@ export class Game {
         this.isHintActive = true;
         this.hintTimer = 3; // Show hint for 3 seconds
       }
+    } else {
+      // Show feedback that prop cannot be used
+      this.audioManager.playSound('game-over');
     }
   }
 
