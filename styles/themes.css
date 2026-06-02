@@ -1,0 +1,11 @@
+:root {
+  --color-primary: #FFB7C5;
+  --color-secondary: #DDA0DD;
+  --color-accent: #FF69B4;
+  --color-background: linear-gradient(135deg, #FFB7C5 0%, #DDA0DD 100%);
+  --color-card-bg: #FFFFFF;
+  --color-text: #333333;
+  --color-text-white: #FFFFFF;
+  --color-slot-bg: rgba(255,255,255,0.3);
+  --color-border: #FF69B4;
+}
