@@ -1,0 +1,95 @@
+/**
+ * Singleton audio manager using Web Audio API.
+ * Handles loading, playing, and controlling all game sounds and background music.
+ */
+export class AudioManager {
+  private static instance: AudioManager;
+  private audioContext: AudioContext | null = null;
+  private sounds: Map<string, AudioBuffer> = new Map();
+  private bgmSource: AudioBufferSourceNode | null = null;
+  private bgmGain: GainNode | null = null;
+  private isMuted: boolean = false;
+
+  private constructor() {}
+
+  static getInstance(): AudioManager {
+    if (!AudioManager.instance) {
+      AudioManager.instance = new AudioManager();
+    }
+    return AudioManager.instance;
+  }
+
+  async init(): Promise<void> {
+    this.audioContext = new AudioContext();
+    this.bgmGain = this.audioContext.createGain();
+    this.bgmGain.connect(this.audioContext.destination);
+  }
+
+  async loadSound(name: string, url: string): Promise<void> {
+    if (!this.audioContext) return;
+
+    try {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      this.sounds.set(name, audioBuffer);
+    } catch (error) {
+      console.warn(`Failed to load sound: ${name}`, error);
+    }
+  }
+
+  playSound(name: string, volume: number = 1): void {
+    if (!this.audioContext || this.isMuted) return;
+
+    const buffer = this.sounds.get(name);
+    if (!buffer) return;
+
+    const source = this.audioContext.createBufferSource();
+    const gainNode = this.audioContext.createGain();
+    gainNode.gain.value = volume;
+
+    source.buffer = buffer;
+    source.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    source.start(0);
+  }
+
+  playBGM(name: string, volume: number = 0.3): void {
+    if (!this.audioContext || this.isMuted) return;
+
+    this.stopBGM();
+
+    const buffer = this.sounds.get(name);
+    if (!buffer) return;
+
+    this.bgmSource = this.audioContext.createBufferSource();
+    this.bgmSource.buffer = buffer;
+    this.bgmSource.loop = true;
+
+    if (this.bgmGain) {
+      this.bgmGain.gain.value = volume;
+      this.bgmSource.connect(this.bgmGain);
+    }
+
+    this.bgmSource.start(0);
+  }
+
+  stopBGM(): void {
+    if (this.bgmSource) {
+      this.bgmSource.stop();
+      this.bgmSource = null;
+    }
+  }
+
+  setMuted(muted: boolean): void {
+    this.isMuted = muted;
+    if (muted) {
+      this.stopBGM();
+    }
+  }
+
+  toggleMute(): boolean {
+    this.setMuted(!this.isMuted);
+    return this.isMuted;
+  }
+}
