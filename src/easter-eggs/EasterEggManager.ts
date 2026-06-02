@@ -50,8 +50,8 @@ export class EasterEggManager {
   }
 
   getActiveBoost(): number {
-    if (this.activeEasterEgg instanceof RoseBlessing) {
-      return this.activeEasterEgg.getPropBoost();
+    if (this.activeEasterEgg?.getBoost) {
+      return this.activeEasterEgg.getBoost();
     }
     return 1;
   }

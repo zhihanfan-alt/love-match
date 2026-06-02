@@ -8,7 +8,8 @@ export class RoseBlessing implements EasterEgg {
   triggerType = CardType.Rose;
   duration = 30;
   isActive = false;
-  propBoost = 1.5; // 50% boost
+  private propBoost: number = 1.5; // 50% boost
+  private remaining: number = 0;
 
   private petals: RosePetals;
   private borderOpacity = 0;
@@ -19,6 +20,7 @@ export class RoseBlessing implements EasterEgg {
 
   activate(): void {
     this.isActive = true;
+    this.remaining = this.duration;
     this.petals = new RosePetals(5);
     this.borderOpacity = 0;
   }
@@ -38,8 +40,8 @@ export class RoseBlessing implements EasterEgg {
     this.petals.update(deltaTime);
 
     // Deactivate after duration
-    this.duration -= deltaTime;
-    if (this.duration <= 0) {
+    this.remaining -= deltaTime;
+    if (this.remaining <= 0) {
       this.deactivate();
       return true;
     }
@@ -72,6 +74,10 @@ export class RoseBlessing implements EasterEgg {
   }
 
   getPropBoost(): number {
+    return this.isActive ? this.propBoost : 1;
+  }
+
+  getBoost(): number {
     return this.isActive ? this.propBoost : 1;
   }
 }

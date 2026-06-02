@@ -9,6 +9,7 @@ export class HeartRain implements EasterEgg {
   duration = 5;
   isActive = false;
 
+  private remaining: number = 0;
   private hearts: Hearts;
   private backgroundOpacity = 0;
   private textOpacity = 0;
@@ -20,6 +21,7 @@ export class HeartRain implements EasterEgg {
 
   activate(): void {
     this.isActive = true;
+    this.remaining = this.duration;
     this.hearts = new Hearts(this.duration);
     this.backgroundOpacity = 0;
     this.textOpacity = 0;
@@ -45,7 +47,8 @@ export class HeartRain implements EasterEgg {
     }
 
     const done = this.hearts.update(deltaTime);
-    if (done) {
+    this.remaining -= deltaTime;
+    if (done || this.remaining <= 0) {
       this.deactivate();
       return true;
     }

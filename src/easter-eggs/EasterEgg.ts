@@ -9,4 +9,5 @@ export interface EasterEgg {
   render(ctx: CanvasRenderingContext2D): void;
   activate(): void;
   deactivate(): void;
+  getBoost?(): number;  // Optional boost method
 }
