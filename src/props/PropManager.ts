@@ -68,13 +68,13 @@ export class PropManager {
     const prop = this.props.get(id);
     if (!prop || !prop.isAvailable()) return false;
 
-    const consumed = prop.use();
-    if (!consumed) return false;
-
-    // Validate that game state supports this prop
+    // Validate before consuming
     if (cards.length === 0 && (id === 'undo' || id === 'moveOut')) {
       return false;
     }
+
+    const consumed = prop.use();
+    if (!consumed) return false;
 
     switch (id) {
       case 'undo':
@@ -91,29 +91,15 @@ export class PropManager {
   }
 
   /**
-   * Undo the last move: return the last card from the slot back to the board.
+   * Undo the last move: restore the last card to its original position.
    */
-  private undo(board: Board, slot: Slot, cards: Card[]): boolean {
+  private undo(_board: Board, _slot: Slot, cards: Card[]): boolean {
     if (cards.length === 0) return false;
 
     const lastCard = cards[cards.length - 1];
-    const removed = slot.removeCards(lastCard.type);
-
-    // Restore removed cards back to board
-    if (removed.length > 0) {
-      for (const card of removed) {
-        card.isRemoved = false;
-      }
-    }
-
-    // Reference board to confirm it still has cards (game continues)
-    const boardCards = board.getCards();
-    if (boardCards.length === 0) {
-      // Edge case: board is empty after undo - nothing to restore to
-      return removed.length > 0;
-    }
-
-    return removed.length > 0;
+    lastCard.restoreOriginalPosition();
+    lastCard.isRemoved = false;
+    return true;
   }
 
   /**
@@ -131,27 +117,9 @@ export class PropManager {
   private moveOut(slot: Slot, cards: Card[]): boolean {
     if (cards.length === 0) return false;
 
-    // Remove up to 3 cards from the slot
     const toRemove = Math.min(3, cards.length);
-    let removed = 0;
-
-    for (let i = 0; i < toRemove; i++) {
-      const card = cards[cards.length - 1 - i];
-      if (card) {
-        slot.removeCards(card.type);
-        removed++;
-      }
-    }
-
-    // Reposition remaining cards in slot
-    const remainingCards = slot.getCards();
-    if (remainingCards.length > 0) {
-      for (const card of remainingCards) {
-        card.isRemoved = true; // mark for slot internal cleanup
-      }
-    }
-
-    return removed > 0;
+    slot.removeLast(toRemove);
+    return true;
   }
 
   /**

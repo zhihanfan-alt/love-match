@@ -28,11 +28,24 @@ export class Slot {
       return false;
     }
 
+    card.saveOriginalPosition();
     this.cards.push(card);
     const targetPos = this.positions[this.cards.length - 1];
     card.moveTo(targetPos);
 
     return true;
+  }
+
+  removeLast(n: number): Card[] {
+    const removed: Card[] = [];
+    for (let i = 0; i < n && this.cards.length > 0; i++) {
+      const card = this.cards.pop();
+      if (card) {
+        removed.push(card);
+      }
+    }
+    this.repositionCards();
+    return removed;
   }
 
   removeCards(type: CardType): Card[] {

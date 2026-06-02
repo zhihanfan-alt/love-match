@@ -11,6 +11,7 @@ export class Card implements CardData {
 
   private targetPosition: Position;
   private startPosition: Position = { x: 0, y: 0 };
+  private originalPosition: Position | null = null;
   private animationProgress: number = 0;
   private isAnimating: boolean = false;
   private scale: number = 1;
@@ -93,6 +94,18 @@ export class Card implements CardData {
     this.targetPosition = { ...target };
     this.animationProgress = 0;
     this.isAnimating = true;
+  }
+
+  saveOriginalPosition(): void {
+    this.originalPosition = { ...this.position };
+  }
+
+  restoreOriginalPosition(): void {
+    if (this.originalPosition) {
+      this.position = { ...this.originalPosition };
+      this.targetPosition = { ...this.originalPosition };
+      this.originalPosition = null;
+    }
   }
 
   setScale(scale: number): void {

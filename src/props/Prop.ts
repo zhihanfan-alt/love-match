@@ -70,6 +70,7 @@ export class Prop {
 
   /** Add uses up to maxUses */
   addUses(count: number): void {
+    if (count <= 0) return;
     this.currentUses = Math.min(this.currentUses + count, this.config.maxUses);
   }
 }
