@@ -4,6 +4,9 @@ import { CardType } from "./types";
 export const CANVAS_WIDTH = 430;
 export const CANVAS_HEIGHT = 932;
 
+// Animation
+export const ANIMATION_SPEED = 3;
+
 // Board card dimensions
 export const CARD_SIZE = 60;
 export const CARD_GAP = 8;

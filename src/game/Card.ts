@@ -1,5 +1,5 @@
 import { CardData, CardType, Position } from '../types';
-import { CARD_SIZE, CARD_RADIUS, COLORS, CARD_EMOJIS } from '../constants';
+import { CARD_SIZE, CARD_RADIUS, COLORS, CARD_EMOJIS, ANIMATION_SPEED } from '../constants';
 
 export class Card implements CardData {
   id: number;
@@ -10,6 +10,7 @@ export class Card implements CardData {
   isRemoved: boolean;
 
   private targetPosition: Position;
+  private startPosition: Position = { x: 0, y: 0 };
   private animationProgress: number = 0;
   private isAnimating: boolean = false;
   private scale: number = 1;
@@ -28,16 +29,16 @@ export class Card implements CardData {
   update(deltaTime: number): void {
     if (!this.isAnimating) return;
 
-    this.animationProgress += deltaTime * 3;
+    this.animationProgress += deltaTime * ANIMATION_SPEED;
     if (this.animationProgress >= 1) {
       this.animationProgress = 1;
       this.isAnimating = false;
       this.position = { ...this.targetPosition };
     }
 
-    const t = this.easeOutCubic(this.animationProgress);
-    this.position.x = this.lerp(this.position.x, this.targetPosition.x, t);
-    this.position.y = this.lerp(this.position.y, this.targetPosition.y, t);
+    const t = Card.easeOutCubic(this.animationProgress);
+    this.position.x = Card.lerp(this.startPosition.x, this.targetPosition.x, t);
+    this.position.y = Card.lerp(this.startPosition.y, this.targetPosition.y, t);
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -88,6 +89,7 @@ export class Card implements CardData {
   }
 
   moveTo(target: Position): void {
+    this.startPosition = { ...this.position };
     this.targetPosition = { ...target };
     this.animationProgress = 0;
     this.isAnimating = true;
@@ -97,20 +99,25 @@ export class Card implements CardData {
     this.scale = scale;
   }
 
+  setOpacity(value: number): void {
+    this.opacity = value;
+  }
+
   containsPoint(x: number, y: number): boolean {
+    const halfSize = (CARD_SIZE / 2) * this.scale;
+    const cx = this.position.x + CARD_SIZE / 2;
+    const cy = this.position.y + CARD_SIZE / 2;
     return (
-      x >= this.position.x &&
-      x <= this.position.x + CARD_SIZE &&
-      y >= this.position.y &&
-      y <= this.position.y + CARD_SIZE
+      x >= cx - halfSize && x <= cx + halfSize &&
+      y >= cy - halfSize && y <= cy + halfSize
     );
   }
 
-  private lerp(a: number, b: number, t: number): number {
+  private static lerp(a: number, b: number, t: number): number {
     return a + (b - a) * t;
   }
 
-  private easeOutCubic(t: number): number {
+  private static easeOutCubic(t: number): number {
     return 1 - Math.pow(1 - t, 3);
   }
 }
