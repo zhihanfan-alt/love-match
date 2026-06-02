@@ -24,6 +24,9 @@ export class AudioManager {
 
   async init(): Promise<void> {
     this.audioContext = new AudioContext();
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+    }
     this.bgmGain = this.audioContext.createGain();
     this.bgmGain.connect(this.audioContext.destination);
     this.soundGenerator = new SoundGenerator(this.audioContext);
@@ -92,7 +95,11 @@ export class AudioManager {
 
   stopBGM(): void {
     if (this.bgmSource) {
-      this.bgmSource.stop();
+      try {
+        this.bgmSource.stop();
+      } catch (e) {
+        // Ignore InvalidStateError if already stopped
+      }
       this.bgmSource = null;
     }
   }
