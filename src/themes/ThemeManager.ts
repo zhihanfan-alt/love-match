@@ -7,6 +7,7 @@ export class ThemeManager {
   private static instance: ThemeManager;
   private themes: Map<string, Theme> = new Map();
   private currentTheme: Theme;
+  private listeners: Set<() => void> = new Set();
 
   private constructor() {
     this.registerTheme(DefaultTheme);
@@ -31,7 +32,20 @@ export class ThemeManager {
     if (theme) {
       this.currentTheme = theme;
       this.applyTheme(theme);
+      this.notifyListeners();
     }
+  }
+
+  addListener(listener: () => void): void {
+    this.listeners.add(listener);
+  }
+
+  removeListener(listener: () => void): void {
+    this.listeners.delete(listener);
+  }
+
+  private notifyListeners(): void {
+    this.listeners.forEach(listener => listener());
   }
 
   private applyTheme(theme: Theme): void {

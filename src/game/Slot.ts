@@ -1,6 +1,6 @@
 import { Card } from './Card';
 import { Position, CardType } from '../types';
-import { SLOT_COUNT, SLOT_CARD_SIZE, SLOT_HEIGHT, CANVAS_WIDTH, COLORS } from '../constants';
+import { SLOT_COUNT, SLOT_CARD_SIZE, SLOT_HEIGHT, CANVAS_WIDTH, COLORS, CARD_EMOJIS } from '../constants';
 
 export class Slot {
   private cards: Card[] = [];
@@ -102,6 +102,34 @@ export class Slot {
       ctx.roundRect(pos.x, pos.y, SLOT_CARD_SIZE, SLOT_CARD_SIZE, 8);
       ctx.stroke();
     }
+
+    // Render cards in slot
+    this.cards.forEach((card, index) => {
+      const pos = this.positions[index];
+      if (!pos) return;
+
+      ctx.save();
+      ctx.translate(pos.x + SLOT_CARD_SIZE / 2, pos.y + SLOT_CARD_SIZE / 2);
+
+      // Card background
+      ctx.fillStyle = COLORS.cardBg;
+      ctx.beginPath();
+      ctx.roundRect(-SLOT_CARD_SIZE / 2, -SLOT_CARD_SIZE / 2, SLOT_CARD_SIZE, SLOT_CARD_SIZE, 8);
+      ctx.fill();
+
+      // Card border
+      ctx.strokeStyle = COLORS.accent;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Card emoji
+      ctx.font = '24px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(CARD_EMOJIS[card.type], 0, 0);
+
+      ctx.restore();
+    });
 
     ctx.restore();
   }

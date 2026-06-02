@@ -22,6 +22,7 @@ export class Game {
   private easterEggManager: EasterEggManager;
   private propManager: PropManager;
   private audioManager: AudioManager;
+  private themeManager: ThemeManager;
   private settingsPanel: SettingsPanel;
   private settingsPanelElement: HTMLElement | null = null;
   private handleClickBound: (e: MouseEvent) => void;
@@ -42,7 +43,8 @@ export class Game {
     // Initialize audio on first user interaction
     this.initAudioOnInteraction();
     // Initialize ThemeManager singleton for SettingsPanel to use
-    ThemeManager.getInstance();
+    this.themeManager = ThemeManager.getInstance();
+    this.themeManager.addListener(this.onThemeChanged.bind(this));
     this.settingsPanel = new SettingsPanel();
     this.settingsPanelElement = this.settingsPanel.getElement();
     document.body.appendChild(this.settingsPanelElement);
@@ -52,6 +54,11 @@ export class Game {
 
     this.setupCanvas();
     this.setupEventListeners();
+  }
+
+  private onThemeChanged(): void {
+    // Theme changed, force re-render
+    this.render();
   }
 
   private setupCanvas(): void {
@@ -295,10 +302,11 @@ export class Game {
   render(): void {
     this.ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Background
+    // Background - use theme colors
+    const theme = this.themeManager.getCurrentTheme();
     const gradient = this.ctx.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    gradient.addColorStop(0, COLORS.bgGradientStart);
-    gradient.addColorStop(1, COLORS.bgGradientEnd);
+    gradient.addColorStop(0, theme.colors.primary);
+    gradient.addColorStop(1, theme.colors.secondary);
     this.ctx.fillStyle = gradient;
     this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
