@@ -48,6 +48,8 @@ export const COLORS = {
   buttonPrimary: "#FF69B4",
   buttonHover: "#FF85C8",
   shadow: "rgba(214, 51, 132, 0.25)",
+  cardShadow: "rgba(214, 51, 132, 0.25)",
+  accent: "#FFB7C5",
 } as const;
 
 // All available card types (8 total)
