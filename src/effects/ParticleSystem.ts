@@ -59,4 +59,8 @@ export class ParticleSystem {
   isEmpty(): boolean {
     return this.particles.length === 0;
   }
+
+  getParticles(): readonly Particle[] {
+    return this.particles;
+  }
 }
