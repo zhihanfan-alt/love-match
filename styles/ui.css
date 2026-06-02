@@ -12,7 +12,7 @@
 }
 
 .settings-content {
-  background: white;
+  background: var(--color-card-bg);
   border-radius: 16px;
   padding: 24px;
   width: 90%;
@@ -39,6 +39,15 @@
   font-size: 24px;
   cursor: pointer;
   color: var(--color-text);
+}
+
+.close-btn:hover {
+  opacity: 0.7;
+}
+
+.close-btn:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .settings-section {
@@ -83,7 +92,7 @@
 
 .theme-name {
   font-size: 12px;
-  color: white;
+  color: var(--color-text);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -100,4 +109,13 @@
   padding: 8px 16px;
   cursor: pointer;
   font-size: 20px;
+}
+
+.audio-btn:hover {
+  opacity: 0.8;
+}
+
+.audio-btn:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }

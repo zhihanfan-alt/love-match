@@ -1,6 +1,14 @@
 import { ThemeSelector } from './ThemeSelector';
 import { AudioManager } from '../audio/AudioManager';
 
+const UI_STRINGS = {
+  settings: '设置',
+  theme: '主题',
+  audio: '音效',
+  muted: '已静音',
+  unmuted: '开启',
+};
+
 export class SettingsPanel {
   private container: HTMLDivElement;
   private themeSelector: ThemeSelector;
@@ -20,20 +28,20 @@ export class SettingsPanel {
     this.container.innerHTML = `
       <div class="settings-content">
         <div class="settings-header">
-          <h2>设置</h2>
+          <h2>${UI_STRINGS.settings}</h2>
           <button class="close-btn" id="close-settings">×</button>
         </div>
         <div class="settings-section">
-          <h3>主题</h3>
+          <h3>${UI_STRINGS.theme}</h3>
           <div id="theme-selector-container"></div>
         </div>
         <div class="settings-section">
-          <h3>音效</h3>
+          <h3>${UI_STRINGS.audio}</h3>
           <div class="audio-controls">
             <button id="toggle-mute" class="audio-btn">
               ${this.audioManager.getIsMuted() ? '🔇' : '🔊'}
             </button>
-            <span>${this.audioManager.getIsMuted() ? '已静音' : '开启'}</span>
+            <span id="mute-status">${this.audioManager.getIsMuted() ? UI_STRINGS.muted : UI_STRINGS.unmuted}</span>
           </div>
         </div>
       </div>
@@ -54,9 +62,9 @@ export class SettingsPanel {
       muteBtn.addEventListener('click', () => {
         const isMuted = this.audioManager.toggleMute();
         muteBtn.textContent = isMuted ? '🔇' : '🔊';
-        const span = muteBtn.nextElementSibling;
+        const span = this.container.querySelector('#mute-status');
         if (span) {
-          span.textContent = isMuted ? '已静音' : '开启';
+          span.textContent = isMuted ? UI_STRINGS.muted : UI_STRINGS.unmuted;
         }
       });
     }
