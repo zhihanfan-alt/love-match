@@ -8,6 +8,7 @@ import { PropManager } from '../props/PropManager';
 import { AudioManager } from '../audio/AudioManager';
 import { ThemeManager } from '../themes/ThemeManager';
 import { SettingsPanel } from '../ui/SettingsPanel';
+import { HelpPanel } from '../ui/HelpPanel';
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -24,7 +25,9 @@ export class Game {
   private audioManager: AudioManager;
   private themeManager: ThemeManager;
   private settingsPanel: SettingsPanel;
+  private helpPanel: HelpPanel;
   private settingsPanelElement: HTMLElement | null = null;
+  private helpPanelElement: HTMLElement | null = null;
   private handleClickBound: (e: MouseEvent) => void;
   private handleTouchBound: (e: TouchEvent) => void;
   private hintTimer: number = 0;
@@ -50,6 +53,10 @@ export class Game {
     this.settingsPanel = new SettingsPanel();
     this.settingsPanelElement = this.settingsPanel.getElement();
     document.body.appendChild(this.settingsPanelElement);
+
+    this.helpPanel = new HelpPanel();
+    this.helpPanelElement = this.helpPanel.getElement();
+    document.body.appendChild(this.helpPanelElement);
 
     this.handleClickBound = this.handleClick.bind(this);
     this.handleTouchBound = this.handleTouch.bind(this);
@@ -143,13 +150,19 @@ export class Game {
 
   private handleInteraction(x: number, y: number): void {
     // Check if settings button clicked (any state)
-    if (x >= CANVAS_WIDTH - 60 && x <= CANVAS_WIDTH - 20 && y >= 20 && y <= 60) {
+    if (x >= CANVAS_WIDTH - 55 && x <= CANVAS_WIDTH - 15 && y >= 15 && y <= 55) {
       this.settingsPanel.toggle();
       return;
     }
 
     // Menu state: start level 1 on any click
     if (this.state === GameState.Menu) {
+      // Check help button
+      const helpBtnY = CANVAS_HEIGHT / 2 + 100;
+      if (x >= CANVAS_WIDTH / 2 - 60 && x <= CANVAS_WIDTH / 2 + 60 && y >= helpBtnY && y <= helpBtnY + 40) {
+        this.helpPanel.toggle();
+        return;
+      }
       this.startLevel(1);
       return;
     }
@@ -499,35 +512,63 @@ export class Game {
 
   private renderMenu(): void {
     this.ctx.save();
-    this.ctx.fillStyle = COLORS.textWhite;
-    this.ctx.font = 'bold 48px PingFang SC';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('爱心消消乐', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3);
 
-    this.ctx.font = '24px PingFang SC';
-    this.ctx.fillText('点击开始游戏', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+    // Title with glow effect
+    this.ctx.shadowColor = 'rgba(100, 200, 255, 0.5)';
+    this.ctx.shadowBlur = 20;
+    this.ctx.fillStyle = COLORS.textWhite;
+    this.ctx.font = 'bold 52px PingFang SC';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('❄️ 爱心消消乐 ❄️', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 - 20);
+    this.ctx.shadowBlur = 0;
+
+    // Subtitle
+    this.ctx.font = '18px PingFang SC';
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    this.ctx.fillText('极光下的浪漫消除', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 + 20);
 
     // Start button
-    this.ctx.fillStyle = COLORS.accent;
+    const btnY = CANVAS_HEIGHT / 2 + 20;
+    const btnWidth = 180;
+    const btnHeight = 55;
+    const gradient = this.ctx.createLinearGradient(CANVAS_WIDTH / 2 - btnWidth / 2, btnY, CANVAS_WIDTH / 2 + btnWidth / 2, btnY);
+    gradient.addColorStop(0, 'rgba(100, 200, 255, 0.8)');
+    gradient.addColorStop(1, 'rgba(150, 100, 255, 0.8)');
+    this.ctx.fillStyle = gradient;
     this.ctx.beginPath();
-    this.ctx.roundRect(CANVAS_WIDTH / 2 - 80, CANVAS_HEIGHT / 2 + 40, 160, 50, 25);
+    this.ctx.roundRect(CANVAS_WIDTH / 2 - btnWidth / 2, btnY, btnWidth, btnHeight, 28);
     this.ctx.fill();
 
     this.ctx.fillStyle = COLORS.textWhite;
-    this.ctx.font = 'bold 20px PingFang SC';
-    this.ctx.fillText('开始', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 70);
+    this.ctx.font = 'bold 22px PingFang SC';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText('开始游戏', CANVAS_WIDTH / 2, btnY + btnHeight / 2);
+
+    // Help button
+    const helpBtnY = btnY + 80;
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    this.ctx.beginPath();
+    this.ctx.roundRect(CANVAS_WIDTH / 2 - 60, helpBtnY, 120, 40, 20);
+    this.ctx.fill();
+    this.ctx.strokeStyle = 'rgba(100, 200, 255, 0.5)';
+    this.ctx.lineWidth = 1;
+    this.ctx.stroke();
+
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    this.ctx.font = '16px PingFang SC';
+    this.ctx.fillText('📖 使用说明', CANVAS_WIDTH / 2, helpBtnY + 20);
 
     // Settings button
-    this.ctx.fillStyle = COLORS.accent;
+    this.ctx.fillStyle = 'rgba(100, 200, 255, 0.6)';
     this.ctx.beginPath();
-    this.ctx.roundRect(CANVAS_WIDTH - 60, 20, 40, 40, 20);
+    this.ctx.roundRect(CANVAS_WIDTH - 55, 15, 40, 40, 20);
     this.ctx.fill();
 
     this.ctx.fillStyle = COLORS.textWhite;
     this.ctx.font = '20px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
-    this.ctx.fillText('⚙', CANVAS_WIDTH - 40, 40);
+    this.ctx.fillText('⚙', CANVAS_WIDTH - 35, 35);
 
     this.ctx.restore();
   }
@@ -591,6 +632,10 @@ export class Game {
     if (this.settingsPanelElement?.parentNode) {
       this.settingsPanelElement.parentNode.removeChild(this.settingsPanelElement);
       this.settingsPanelElement = null;
+    }
+    if (this.helpPanelElement?.parentNode) {
+      this.helpPanelElement.parentNode.removeChild(this.helpPanelElement);
+      this.helpPanelElement = null;
     }
   }
 }
