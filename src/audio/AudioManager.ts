@@ -2,6 +2,8 @@
  * Singleton audio manager using Web Audio API.
  * Handles loading, playing, and controlling all game sounds and background music.
  */
+import { SoundGenerator } from './SoundGenerator';
+
 export class AudioManager {
   private static instance: AudioManager;
   private audioContext: AudioContext | null = null;
@@ -9,6 +11,7 @@ export class AudioManager {
   private bgmSource: AudioBufferSourceNode | null = null;
   private bgmGain: GainNode | null = null;
   private isMuted: boolean = false;
+  private soundGenerator: SoundGenerator | null = null;
 
   private constructor() {}
 
@@ -23,6 +26,19 @@ export class AudioManager {
     this.audioContext = new AudioContext();
     this.bgmGain = this.audioContext.createGain();
     this.bgmGain.connect(this.audioContext.destination);
+    this.soundGenerator = new SoundGenerator(this.audioContext);
+    this.generateSounds();
+  }
+
+  private generateSounds(): void {
+    if (!this.soundGenerator) return;
+
+    this.sounds.set('click', this.soundGenerator.generateClick());
+    this.sounds.set('match', this.soundGenerator.generateMatch());
+    this.sounds.set('level-complete', this.soundGenerator.generateLevelComplete());
+    this.sounds.set('game-over', this.soundGenerator.generateGameOver());
+    this.sounds.set('easter-egg', this.soundGenerator.generateEasterEgg());
+    this.sounds.set('bgm', this.soundGenerator.generateBGM());
   }
 
   async loadSound(name: string, url: string): Promise<void> {
