@@ -1,94 +1,143 @@
 import { CardData, CardType, Position } from '../types';
-import { CARD_SIZE, CARD_RADIUS, COLORS, CARD_EMOJIS, ANIMATION_SPEED } from '../constants';
+import { CARD_EMOJIS } from '../constants';
+import { animateCardMove, animateCardSnap, animateClick, killTweensOf } from '../animation/GSAPAnimations';
+
+/** Map card types to their accent glow colours */
+const TYPE_GLOW: Record<CardType, string> = {
+  [CardType.Heart]: '#ff6b9d',
+  [CardType.Kiss]: '#c084fc',
+  [CardType.Rose]: '#f472b6',
+  [CardType.Begonia]: '#fb923c',
+  [CardType.Star]: '#fbbf24',
+  [CardType.Moon]: '#818cf8',
+  [CardType.Gift]: '#34d399',
+  [CardType.Gem]: '#22d3ee',
+};
+
+interface Ripple {
+  radius: number;
+  maxRadius: number;
+  alpha: number;
+  color: string;
+}
 
 export class Card implements CardData {
   id: number;
   type: CardType;
   position: Position;
   layer: number;
-  isRevealed: boolean;
   isRemoved: boolean;
 
-  private targetPosition: Position;
-  private startPosition: Position = { x: 0, y: 0 };
+  private cardSize: number;
+  private cardRadius: number;
+  private emojiSize: number;
   private originalPosition: Position | null = null;
-  private animationProgress: number = 0;
-  private isAnimating: boolean = false;
-  private scale: number = 1;
+  scale: number = 1;
   private opacity: number = 1;
-  private clickAnimation: number = 0;
-  private isClickAnimating: boolean = false;
+  private ripples: Ripple[] = [];
 
-  constructor(id: number, type: CardType, position: Position, layer: number) {
+  constructor(id: number, type: CardType, position: Position, layer: number, cardSize: number = 60) {
     this.id = id;
     this.type = type;
     this.position = { ...position };
-    this.targetPosition = { ...position };
     this.layer = layer;
-    this.isRevealed = true;
     this.isRemoved = false;
+    this.cardSize = cardSize;
+    this.cardRadius = Math.round(cardSize * 0.22);
+    this.emojiSize = Math.round(cardSize * 0.53);
   }
 
-  update(deltaTime: number): void {
-    // Update position animation
-    if (this.isAnimating) {
-      this.animationProgress += deltaTime * ANIMATION_SPEED;
-      if (this.animationProgress >= 1) {
-        this.animationProgress = 1;
-        this.isAnimating = false;
-        this.position = { ...this.targetPosition };
+  update(_deltaTime: number): void {
+    // Update ripples
+    for (let i = this.ripples.length - 1; i >= 0; i--) {
+      const r = this.ripples[i];
+      r.radius += (r.maxRadius - r.radius) * 0.15;
+      r.alpha -= _deltaTime * 3.5;
+      if (r.alpha <= 0) {
+        this.ripples.splice(i, 1);
       }
-
-      const t = Card.easeOutCubic(this.animationProgress);
-      this.position.x = Card.lerp(this.startPosition.x, this.targetPosition.x, t);
-      this.position.y = Card.lerp(this.startPosition.y, this.targetPosition.y, t);
     }
+  }
 
-    // Update click animation
-    if (this.isClickAnimating) {
-      this.clickAnimation -= deltaTime * 8;
-      if (this.clickAnimation <= 0) {
-        this.clickAnimation = 0;
-        this.isClickAnimating = false;
-      }
-      this.scale = 1 + this.clickAnimation * 0.2;
-    }
+  triggerRipple(): void {
+    const glow = TYPE_GLOW[this.type] ?? '#64c8ff';
+    this.ripples.push({
+      radius: 0,
+      maxRadius: this.cardSize * 0.8,
+      alpha: 0.7,
+      color: glow,
+    });
   }
 
   playClickAnimation(): void {
-    this.clickAnimation = 1;
-    this.isClickAnimating = true;
+    animateClick(this);
   }
 
   render(ctx: CanvasRenderingContext2D): void {
     if (this.isRemoved) return;
 
+    const s = this.cardSize;
+    const r = this.cardRadius;
+    const glow = TYPE_GLOW[this.type] ?? '#64c8ff';
+
     ctx.save();
     ctx.globalAlpha = this.opacity;
-    ctx.translate(this.position.x + CARD_SIZE / 2, this.position.y + CARD_SIZE / 2);
+    ctx.translate(this.position.x + s / 2, this.position.y + s / 2);
     ctx.scale(this.scale, this.scale);
 
-    // Shadow
-    ctx.shadowColor = COLORS.cardShadow;
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetY = 4;
+    // Outer glow — type-colored, enhanced by layer depth
+    const layerDepth = Math.min(this.layer, 7);
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 10 + layerDepth * 3;
+    ctx.shadowOffsetY = 3 + layerDepth * 1.5;
+    ctx.shadowOffsetX = layerDepth * 0.8;
 
-    // Card background
-    this.drawRoundRect(ctx, -CARD_SIZE / 2, -CARD_SIZE / 2, CARD_SIZE, CARD_SIZE, CARD_RADIUS);
-    ctx.fillStyle = COLORS.cardBg;
+    // Card background — radial gradient (bright center → subtle tint)
+    this.drawRoundRect(ctx, -s / 2, -s / 2, s, s, r);
+    const grad = ctx.createRadialGradient(0, -s * 0.15, s * 0.05, 0, 0, s * 0.7);
+    grad.addColorStop(0, 'rgba(255,255,255,0.97)');
+    grad.addColorStop(0.6, 'rgba(255,255,255,0.93)');
+    grad.addColorStop(1, this.hexToRgba(glow, 0.12));
+    ctx.fillStyle = grad;
     ctx.fill();
 
-    // Border
+    // Darken lower-layer cards to indicate depth
+    if (this.layer > 0) {
+      const darken = Math.min(this.layer * 0.06, 0.25);
+      this.drawRoundRect(ctx, -s / 2, -s / 2, s, s, r);
+      ctx.fillStyle = `rgba(0,0,0,${darken})`;
+      ctx.fill();
+    }
+
+    // Gloss border — thin white semi-transparent
     ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = COLORS.accent;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
+    // Inner edge highlight (top-left)
+    const innerGrad = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2);
+    innerGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
+    innerGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+    innerGrad.addColorStop(1, 'rgba(0,0,0,0.03)');
+    this.drawRoundRect(ctx, -s / 2 + 1, -s / 2 + 1, s - 2, s - 2, r - 1);
+    ctx.fillStyle = innerGrad;
+    ctx.fill();
+
     // Emoji
-    ctx.font = '32px Arial';
+    ctx.font = `${this.emojiSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(CARD_EMOJIS[this.type], 0, 0);
+
+    // Ripple effects
+    for (const ripple of this.ripples) {
+      ctx.beginPath();
+      ctx.arc(0, 0, ripple.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = this.hexToRgba(ripple.color, ripple.alpha);
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
 
     ctx.restore();
   }
@@ -107,11 +156,16 @@ export class Card implements CardData {
     ctx.closePath();
   }
 
+  private hexToRgba(hex: string, alpha: number): string {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
   moveTo(target: Position): void {
-    this.startPosition = { ...this.position };
-    this.targetPosition = { ...target };
-    this.animationProgress = 0;
-    this.isAnimating = true;
+    animateCardMove(this.position, target);
   }
 
   saveOriginalPosition(): void {
@@ -120,8 +174,8 @@ export class Card implements CardData {
 
   restoreOriginalPosition(): void {
     if (this.originalPosition) {
-      this.position = { ...this.originalPosition };
-      this.targetPosition = { ...this.originalPosition };
+      killTweensOf(this.position);
+      animateCardSnap(this.position, this.originalPosition);
       this.originalPosition = null;
     }
   }
@@ -135,20 +189,21 @@ export class Card implements CardData {
   }
 
   containsPoint(x: number, y: number): boolean {
-    const halfSize = (CARD_SIZE / 2) * this.scale;
-    const cx = this.position.x + CARD_SIZE / 2;
-    const cy = this.position.y + CARD_SIZE / 2;
+    const halfSize = (this.cardSize / 2) * this.scale;
+    const cx = this.position.x + this.cardSize / 2;
+    const cy = this.position.y + this.cardSize / 2;
     return (
       x >= cx - halfSize && x <= cx + halfSize &&
       y >= cy - halfSize && y <= cy + halfSize
     );
   }
 
-  private static lerp(a: number, b: number, t: number): number {
-    return a + (b - a) * t;
+  getCardSize(): number {
+    return this.cardSize;
   }
 
-  private static easeOutCubic(t: number): number {
-    return 1 - Math.pow(1 - t, 3);
+  killAnimations(): void {
+    killTweensOf(this.position);
+    killTweensOf(this);
   }
 }

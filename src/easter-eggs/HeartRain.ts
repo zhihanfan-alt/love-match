@@ -6,24 +6,24 @@ import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS } from '../constants';
 export class HeartRain implements EasterEgg {
   name = 'Heart Rain';
   triggerType = CardType.Heart;
-  duration = 5;
+  duration = 3;
   isActive = false;
 
   private remaining: number = 0;
   private hearts: Hearts;
-  private backgroundOpacity = 0;
+  private flashOpacity = 0;
   private textOpacity = 0;
   private textTimer = 0;
 
   constructor() {
-    this.hearts = new Hearts(this.duration);
+    this.hearts = new Hearts(this.duration, 0.25);
   }
 
   activate(): void {
     this.isActive = true;
     this.remaining = this.duration;
-    this.hearts = new Hearts(this.duration);
-    this.backgroundOpacity = 0;
+    this.hearts.reset();
+    this.flashOpacity = 0.6;
     this.textOpacity = 0;
     this.textTimer = 0;
   }
@@ -35,15 +35,16 @@ export class HeartRain implements EasterEgg {
   update(deltaTime: number): boolean {
     if (!this.isActive) return false;
 
-    // Fade in background
-    if (this.backgroundOpacity < 0.3) {
-      this.backgroundOpacity += deltaTime * 0.2;
+    // Flash fades out quickly
+    if (this.flashOpacity > 0) {
+      this.flashOpacity -= deltaTime * 2;
+      if (this.flashOpacity < 0) this.flashOpacity = 0;
     }
 
-    // Show text after 1 second
+    // Show text after 0.5s
     this.textTimer += deltaTime;
-    if (this.textTimer > 1 && this.textOpacity < 1) {
-      this.textOpacity += deltaTime;
+    if (this.textTimer > 0.5 && this.textOpacity < 1) {
+      this.textOpacity += deltaTime * 3;
     }
 
     const done = this.hearts.update(deltaTime);
@@ -59,12 +60,14 @@ export class HeartRain implements EasterEgg {
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.isActive) return;
 
-    // Pink overlay
-    ctx.save();
-    ctx.globalAlpha = this.backgroundOpacity;
-    ctx.fillStyle = COLORS.bgGradientStart;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.restore();
+    // White flash overlay
+    if (this.flashOpacity > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.flashOpacity;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.restore();
+    }
 
     // Hearts
     this.hearts.render(ctx);
@@ -72,7 +75,7 @@ export class HeartRain implements EasterEgg {
     // Text
     if (this.textOpacity > 0) {
       ctx.save();
-      ctx.globalAlpha = this.textOpacity;
+      ctx.globalAlpha = Math.min(this.textOpacity, 1);
       ctx.fillStyle = COLORS.textWhite;
       ctx.font = 'bold 36px PingFang SC';
       ctx.textAlign = 'center';

@@ -2,9 +2,33 @@ import { Particle, ParticleConfig } from './Particle';
 
 export class ParticleSystem {
   private particles: Particle[] = [];
+  private pool: Particle[] = [];
+  private static readonly POOL_PREWARM = 100;
+
+  constructor() {
+    this.prewarm(ParticleSystem.POOL_PREWARM);
+  }
+
+  private prewarm(count: number): void {
+    for (let i = 0; i < count; i++) {
+      this.pool.push(new Particle());
+    }
+  }
+
+  private acquire(config: ParticleConfig): Particle {
+    let p = this.pool.pop();
+    if (!p) p = new Particle();
+    p.reset(config);
+    return p;
+  }
+
+  private release(p: Particle): void {
+    p.isDead = true;
+    this.pool.push(p);
+  }
 
   addParticle(config: ParticleConfig): void {
-    this.particles.push(new Particle(config));
+    this.particles.push(this.acquire(config));
   }
 
   addParticles(count: number, baseConfig: Partial<ParticleConfig>, randomize?: Partial<ParticleConfig>): void {
@@ -33,15 +57,20 @@ export class ParticleSystem {
         if (randomize.size !== undefined) config.size += (Math.random() - 0.5) * randomize.size;
       }
 
-      this.particles.push(new Particle(config));
+      this.particles.push(this.acquire(config));
     }
   }
 
   update(deltaTime: number): void {
-    this.particles = this.particles.filter(p => {
-      p.update(deltaTime);
-      return !p.isDead;
-    });
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      this.particles[i].update(deltaTime);
+      if (this.particles[i].isDead) {
+        this.release(this.particles[i]);
+        const last = this.particles.length - 1;
+        if (i !== last) this.particles[i] = this.particles[last];
+        this.particles.pop();
+      }
+    }
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -49,7 +78,10 @@ export class ParticleSystem {
   }
 
   clear(): void {
-    this.particles = [];
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      this.release(this.particles[i]);
+    }
+    this.particles.length = 0;
   }
 
   getParticleCount(): number {

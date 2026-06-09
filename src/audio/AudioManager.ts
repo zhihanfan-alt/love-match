@@ -23,6 +23,7 @@ export class AudioManager {
   }
 
   async init(): Promise<void> {
+    if (this.audioContext) return;
     this.audioContext = new AudioContext();
     if (this.audioContext.state === 'suspended') {
       await this.audioContext.resume();

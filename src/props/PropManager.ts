@@ -172,4 +172,24 @@ export class PropManager {
   getProp(id: string): Prop | undefined {
     return this.props.get(id);
   }
+
+  /** Reset all props with scaled uses for the current level */
+  applyUsesMultiplier(multiplier: number): void {
+    const baseUses: Record<string, number> = {
+      undo: 5,
+      shuffle: 3,
+      moveOut: 3,
+      hint: 5,
+    };
+    this.props.forEach((prop, id) => {
+      const base = baseUses[id] ?? prop.getMaxUses();
+      const scaled = Math.max(1, Math.round(base * multiplier));
+      prop.resetUses(scaled);
+    });
+  }
+
+  /** Reset all props to default state */
+  resetAll(): void {
+    this.initializeProps();
+  }
 }

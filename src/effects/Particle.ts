@@ -14,22 +14,26 @@ export interface ParticleConfig {
 }
 
 export class Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-  size: number;
-  color: string;
-  gravity: number;
-  friction: number;
-  opacity: number;
-  rotation: number;
-  rotationSpeed: number;
-  isDead: boolean = false;
+  x: number = 0;
+  y: number = 0;
+  vx: number = 0;
+  vy: number = 0;
+  life: number = 0;
+  maxLife: number = 0;
+  size: number = 0;
+  color: string = '';
+  gravity: number = 0.1;
+  friction: number = 0.99;
+  opacity: number = 1;
+  rotation: number = 0;
+  rotationSpeed: number = 0;
+  isDead: boolean = true;
 
-  constructor(config: ParticleConfig) {
+  constructor(config?: ParticleConfig) {
+    if (config) this.reset(config);
+  }
+
+  reset(config: ParticleConfig): void {
     this.x = config.x;
     this.y = config.y;
     this.vx = config.vx;
@@ -43,6 +47,7 @@ export class Particle {
     this.opacity = config.opacity ?? 1;
     this.rotation = config.rotation ?? 0;
     this.rotationSpeed = config.rotationSpeed ?? 0;
+    this.isDead = false;
   }
 
   update(deltaTime: number): void {

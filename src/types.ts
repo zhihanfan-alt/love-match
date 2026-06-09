@@ -22,14 +22,7 @@ export interface CardData {
   type: CardType;
   position: Position;
   layer: number;
-  isRevealed: boolean;
   isRemoved: boolean;
-}
-
-// Item in the bottom matching slot
-export interface SlotItem {
-  card: CardData;
-  position: Position;
 }
 
 // Game flow states
@@ -39,6 +32,7 @@ export enum GameState {
   Paused = "Paused",
   GameOver = "GameOver",
   LevelComplete = "LevelComplete",
+  Custom = "Custom",
 }
 
 // Level configuration
@@ -47,5 +41,11 @@ export interface LevelConfig {
   name: string;
   layers: number;
   cardTypes: CardType[];
-  cardsPerType: number;
+  boardCols: number;
+  boardRows: number;
+  cardSize: number;
+  cardGap: number;
+  slotCount: number;
+  timeLimit: number | null;
+  propUsesMultiplier: number;
 }

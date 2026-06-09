@@ -1,47 +1,60 @@
 import { Card } from './Card';
 import { CardType } from '../types';
-import { BOARD_COLS, BOARD_ROWS, CARD_SIZE, CARD_GAP, BOARD_START_Y, CANVAS_WIDTH } from '../constants';
+import { CANVAS_WIDTH } from '../constants';
+
+export interface BoardConfig {
+  layers: number;
+  cardTypes: CardType[];
+  boardCols: number;
+  boardRows: number;
+  cardSize: number;
+  cardGap: number;
+  boardStartY: number;
+}
 
 export class Board {
   private cards: Card[] = [];
-  private layers: number;
-  private cardTypes: CardType[];
+  private config: BoardConfig;
   private sortedForHitTest: Card[] | null = null;
   private sortedForRender: Card[] | null = null;
   private needsSort: boolean = true;
 
-  constructor(layers: number, cardTypes: CardType[]) {
-    this.layers = layers;
-    this.cardTypes = cardTypes;
+  constructor(config: BoardConfig) {
+    this.config = config;
   }
 
   generate(): void {
     this.cards = [];
     this.needsSort = true;
     let cardId = 0;
+    const { layers, cardTypes, boardCols, boardRows, cardSize, cardGap, boardStartY } = this.config;
 
-    for (let layer = 0; layer < this.layers; layer++) {
-      const cols = BOARD_COLS - layer;
-      const rows = BOARD_ROWS - layer;
-      const offsetX = (layer * (CARD_SIZE + CARD_GAP)) / 2;
-      const offsetY = (layer * (CARD_SIZE + CARD_GAP)) / 2;
+    for (let layer = 0; layer < layers; layer++) {
+      const cols = boardCols - layer;
+      const rows = boardRows - layer;
+      if (cols <= 0 || rows <= 0) continue;
 
-      // Generate pairs for this layer
+      const offsetX = (layer * (cardSize + cardGap)) / 2;
+      const offsetY = (layer * (cardSize + cardGap)) / 2;
+
       const totalCards = cols * rows;
       const pairsNeeded = Math.floor(totalCards / 3) * 3;
-      const typesForLayer = this.selectTypesForLayer(pairsNeeded);
+      if (pairsNeeded === 0) continue;
+
+      const typesForLayer = this.selectTypesForLayer(pairsNeeded, cardTypes);
 
       let cardIndex = 0;
       for (let row = 0; row < rows && cardIndex < pairsNeeded; row++) {
         for (let col = 0; col < cols && cardIndex < pairsNeeded; col++) {
-          const x = offsetX + col * (CARD_SIZE + CARD_GAP) + (CANVAS_WIDTH - cols * (CARD_SIZE + CARD_GAP)) / 2;
-          const y = BOARD_START_Y + offsetY + row * (CARD_SIZE + CARD_GAP);
+          const x = offsetX + col * (cardSize + cardGap) + (CANVAS_WIDTH - cols * (cardSize + cardGap)) / 2;
+          const y = boardStartY + offsetY + row * (cardSize + cardGap);
 
           const card = new Card(
             cardId++,
             typesForLayer[cardIndex],
             { x, y },
-            layer
+            layer,
+            cardSize
           );
 
           this.cards.push(card);
@@ -51,16 +64,14 @@ export class Board {
     }
   }
 
-  private selectTypesForLayer(count: number): CardType[] {
-    // count is always a multiple of 3 (guaranteed by caller)
-    // Distribute count cards so each type appears in multiples of 3
-    const numTypes = this.cardTypes.length;
+  private selectTypesForLayer(count: number, cardTypes: CardType[]): CardType[] {
+    const numTypes = cardTypes.length;
     const totalTriplets = Math.floor(count / 3);
     const tripletsPerType = Math.floor(totalTriplets / numTypes);
     let extraTriplets = totalTriplets - tripletsPerType * numTypes;
 
     const types: CardType[] = [];
-    for (const type of this.cardTypes) {
+    for (const type of cardTypes) {
       let tripletCount = tripletsPerType;
       if (extraTriplets > 0) {
         tripletCount++;
@@ -86,7 +97,6 @@ export class Board {
 
     for (const card of this.sortedForHitTest) {
       if (card.containsPoint(x, y)) {
-        // Check if card is accessible (not covered by others)
         if (this.isCardAccessible(card)) {
           return card;
         }
@@ -111,11 +121,12 @@ export class Board {
   }
 
   private cardsOverlap(a: Card, b: Card): boolean {
+    const s = this.config.cardSize;
     return !(
-      a.position.x + CARD_SIZE < b.position.x ||
-      b.position.x + CARD_SIZE < a.position.x ||
-      a.position.y + CARD_SIZE < b.position.y ||
-      b.position.y + CARD_SIZE < a.position.y
+      a.position.x + s < b.position.x ||
+      b.position.x + s < a.position.x ||
+      a.position.y + s < b.position.y ||
+      b.position.y + s < a.position.y
     );
   }
 
@@ -126,6 +137,14 @@ export class Board {
 
   getCards(): Card[] {
     return this.cards.filter(c => !c.isRemoved);
+  }
+
+  getRemainingCount(): number {
+    return this.cards.filter(c => !c.isRemoved).length;
+  }
+
+  getTotalCount(): number {
+    return this.cards.length;
   }
 
   private updateSortedArrays(): void {

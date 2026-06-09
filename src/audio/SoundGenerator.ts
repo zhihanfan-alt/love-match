@@ -105,7 +105,7 @@ export class SoundGenerator {
   }
 
   generateBGM(): AudioBuffer {
-    const duration = 30;
+    const duration = 2;
     const sampleRate = this.audioContext.sampleRate;
     const buffer = this.audioContext.createBuffer(2, sampleRate * duration, sampleRate);
     const left = buffer.getChannelData(0);

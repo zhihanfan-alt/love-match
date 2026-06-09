@@ -19,10 +19,14 @@ export class Fireworks {
       this.launch();
     }
 
-    this.systems = this.systems.filter(s => {
-      s.update(deltaTime);
-      return !s.isEmpty();
-    });
+    for (let i = this.systems.length - 1; i >= 0; i--) {
+      this.systems[i].update(deltaTime);
+      if (this.systems[i].isEmpty()) {
+        const last = this.systems.length - 1;
+        if (i !== last) this.systems[i] = this.systems[last];
+        this.systems.pop();
+      }
+    }
 
     return this.timer >= this.duration && this.systems.length === 0;
   }
@@ -32,7 +36,6 @@ export class Fireworks {
     const x = Math.random() * CANVAS_WIDTH;
     const y = Math.random() * CANVAS_HEIGHT * 0.5;
 
-    // Firework burst
     const colors = ['#FF69B4', '#FFB7C5', '#FF4D6D', '#FFD700', '#DDA0DD'];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
@@ -54,6 +57,12 @@ export class Fireworks {
     });
 
     this.systems.push(system);
+  }
+
+  reset(duration?: number): void {
+    this.systems.length = 0;
+    this.timer = 0;
+    if (duration !== undefined) this.duration = duration;
   }
 
   render(ctx: CanvasRenderingContext2D): void {

@@ -48,19 +48,29 @@ export class EmojiParticles {
     return this.system.getParticles();
   }
 
+  reset(): void {
+    this.timer = 0;
+    this.system.clear();
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
     const particles = this.system.getParticles();
-    particles.forEach((p) => {
-      if (p.isDead) return;
+    if (particles.length === 0) return;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p.isDead) continue;
       ctx.save();
       ctx.globalAlpha = p.opacity;
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rotation);
-      ctx.font = `${p.size}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.font = `${p.size | 0}px Arial`;
       ctx.fillText(this.emoji, 0, 0);
       ctx.restore();
-    });
+    }
+    ctx.restore();
   }
 }

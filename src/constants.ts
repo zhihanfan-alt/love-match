@@ -7,20 +7,24 @@ export const CANVAS_HEIGHT = 932;
 // Animation
 export const ANIMATION_SPEED = 3;
 
-// Board card dimensions
+// Card defaults (overridden per level)
 export const CARD_SIZE = 60;
 export const CARD_GAP = 8;
 export const CARD_RADIUS = 12;
 
-// Slot (bottom bar) dimensions
+// Slot defaults (overridden per level)
 export const SLOT_COUNT = 7;
 export const SLOT_HEIGHT = 80;
 export const SLOT_CARD_SIZE = 50;
 
-// Board layout
+// Board defaults (overridden per level)
 export const BOARD_COLS = 6;
 export const BOARD_ROWS = 7;
 export const BOARD_START_Y = 200;
+
+// Timer thresholds
+export const TIMER_WARNING_SECONDS = 30;
+export const TIMER_CRITICAL_SECONDS = 10;
 
 // Theme colours – Arctic Aurora palette
 export const COLORS = {

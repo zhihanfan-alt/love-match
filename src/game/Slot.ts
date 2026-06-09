@@ -1,30 +1,40 @@
 import { Card } from './Card';
 import { Position, CardType } from '../types';
-import { SLOT_COUNT, SLOT_CARD_SIZE, SLOT_HEIGHT, CANVAS_WIDTH, COLORS, CARD_EMOJIS } from '../constants';
+import { CANVAS_WIDTH, CARD_EMOJIS } from '../constants';
 
 export class Slot {
   private cards: Card[] = [];
   private positions: Position[] = [];
+  private maxCards: number;
+  private slotCardSize: number;
+  private slotY: number;
+  private slotGap: number;
+  private breathePhase: number = 0;
+  private dangerPulse: number = 0;
+  private prevDangerLevel: number = 0;
 
-  constructor() {
+  constructor(maxCards: number, cardSize: number, slotY: number) {
+    this.maxCards = maxCards;
+    this.slotCardSize = Math.round(cardSize * 0.83);
+    this.slotY = slotY;
+    this.slotGap = Math.max(4, Math.round(cardSize * 0.13));
     this.calculatePositions();
   }
 
   private calculatePositions(): void {
-    const totalWidth = SLOT_COUNT * (SLOT_CARD_SIZE + 8) - 8;
+    const totalWidth = this.maxCards * (this.slotCardSize + this.slotGap) - this.slotGap;
     const startX = (CANVAS_WIDTH - totalWidth) / 2;
-    const y = 850;
 
-    for (let i = 0; i < SLOT_COUNT; i++) {
+    for (let i = 0; i < this.maxCards; i++) {
       this.positions.push({
-        x: startX + i * (SLOT_CARD_SIZE + 8),
-        y: y,
+        x: startX + i * (this.slotCardSize + this.slotGap),
+        y: this.slotY,
       });
     }
   }
 
   addCard(card: Card): boolean {
-    if (this.cards.length >= SLOT_COUNT) {
+    if (this.cards.length >= this.maxCards) {
       return false;
     }
 
@@ -65,7 +75,7 @@ export class Slot {
   }
 
   isFull(): boolean {
-    return this.cards.length >= SLOT_COUNT;
+    return this.cards.length >= this.maxCards;
   }
 
   getCards(): Card[] {
@@ -76,31 +86,98 @@ export class Slot {
     return this.cards.length;
   }
 
+  getMaxCards(): number {
+    return this.maxCards;
+  }
+
+  /** 0=safe, 1=warning (≤2 slots left), 2=danger (≤1 slot left) */
+  getDangerLevel(): number {
+    const remaining = this.maxCards - this.cards.length;
+    if (remaining <= 1) return 2;
+    if (remaining <= 2) return 1;
+    return 0;
+  }
+
+  /** Returns true if danger level just increased since last call */
+  checkDangerEscalated(): boolean {
+    const current = this.getDangerLevel();
+    const escalated = current > this.prevDangerLevel;
+    this.prevDangerLevel = current;
+    return escalated;
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
-    // Slot background
-    const totalWidth = SLOT_COUNT * (SLOT_CARD_SIZE + 8) - 8;
+    const scs = this.slotCardSize;
+    const totalWidth = this.maxCards * (scs + this.slotGap) - this.slotGap;
     const startX = (CANVAS_WIDTH - totalWidth) / 2 - 12;
-    const y = 838;
+    const slotHeight = scs + 16;
+
+    // Breathe phase for empty slot pulse
+    this.breathePhase += 0.03;
+    const breathe = 0.5 + Math.sin(this.breathePhase) * 0.2;
+
+    // Danger pulse
+    const dangerLevel = this.getDangerLevel();
+    this.dangerPulse += dangerLevel > 0 ? 0.08 : 0;
+    const dangerPulseVal = Math.sin(this.dangerPulse * 3) * 0.5 + 0.5;
+
+    // Shake offset for danger state
+    let shakeX = 0;
+    let shakeY = 0;
+    if (dangerLevel >= 2) {
+      shakeX = (Math.random() - 0.5) * 2 * dangerPulseVal;
+      shakeY = (Math.random() - 0.5) * 1.5 * dangerPulseVal;
+    }
 
     ctx.save();
-    ctx.fillStyle = COLORS.slotBg;
+    ctx.translate(shakeX, shakeY);
+
+    // Glassmorphism background — gradient fill
+    const bgGrad = ctx.createLinearGradient(startX, this.slotY - 8, startX, this.slotY - 8 + slotHeight);
+    bgGrad.addColorStop(0, 'rgba(255,255,255,0.18)');
+    bgGrad.addColorStop(1, 'rgba(100,200,255,0.08)');
+    ctx.fillStyle = bgGrad;
     ctx.beginPath();
-    ctx.roundRect(startX, y, totalWidth + 24, SLOT_HEIGHT + 8, 16);
+    ctx.roundRect(startX, this.slotY - 8, totalWidth + 24, slotHeight, 16);
     ctx.fill();
 
-    // Slot borders
-    ctx.strokeStyle = COLORS.accent;
-    ctx.lineWidth = 2;
+    // Slot border — danger-aware color
+    let borderColor = 'rgba(100,200,255,0.4)';
+    let borderWidth = 1.5;
+    if (dangerLevel === 1) {
+      borderColor = `rgba(255,165,0,${0.5 + dangerPulseVal * 0.3})`;
+      borderWidth = 2;
+    } else if (dangerLevel === 2) {
+      borderColor = `rgba(255,60,60,${0.6 + dangerPulseVal * 0.4})`;
+      borderWidth = 2.5;
+    }
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = borderWidth;
     ctx.stroke();
 
-    // Empty slot indicators
-    for (let i = 0; i < SLOT_COUNT; i++) {
-      const pos = this.positions[i];
-      ctx.strokeStyle = 'rgba(255,105,180,0.3)';
-      ctx.lineWidth = 1;
+    // Danger glow effect
+    if (dangerLevel >= 1) {
+      ctx.shadowColor = dangerLevel >= 2 ? 'rgba(255,60,60,0.5)' : 'rgba(255,165,0,0.4)';
+      ctx.shadowBlur = 8 + dangerPulseVal * 6;
       ctx.beginPath();
-      ctx.roundRect(pos.x, pos.y, SLOT_CARD_SIZE, SLOT_CARD_SIZE, 8);
+      ctx.roundRect(startX, this.slotY - 8, totalWidth + 24, slotHeight, 16);
       ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // Empty slot indicators — breathing dashed outlines
+    for (let i = 0; i < this.maxCards; i++) {
+      const pos = this.positions[i];
+      const isFilled = i < this.cards.length;
+      ctx.strokeStyle = isFilled
+        ? 'rgba(100,200,255,0.6)'
+        : `rgba(255,105,180,${0.15 + breathe * 0.15})`;
+      ctx.lineWidth = isFilled ? 1.5 : 1;
+      ctx.setLineDash(isFilled ? [] : [4, 3]);
+      ctx.beginPath();
+      ctx.roundRect(pos.x, pos.y, scs, scs, 8);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // Render cards in slot
@@ -109,21 +186,24 @@ export class Slot {
       if (!pos) return;
 
       ctx.save();
-      ctx.translate(pos.x + SLOT_CARD_SIZE / 2, pos.y + SLOT_CARD_SIZE / 2);
+      ctx.translate(pos.x + scs / 2, pos.y + scs / 2);
 
-      // Card background
-      ctx.fillStyle = COLORS.cardBg;
+      // Card bg with gradient
+      const cardGrad = ctx.createRadialGradient(0, -scs * 0.1, scs * 0.05, 0, 0, scs * 0.6);
+      cardGrad.addColorStop(0, 'rgba(255,255,255,0.97)');
+      cardGrad.addColorStop(1, 'rgba(200,230,255,0.9)');
+      ctx.fillStyle = cardGrad;
       ctx.beginPath();
-      ctx.roundRect(-SLOT_CARD_SIZE / 2, -SLOT_CARD_SIZE / 2, SLOT_CARD_SIZE, SLOT_CARD_SIZE, 8);
+      ctx.roundRect(-scs / 2, -scs / 2, scs, scs, 8);
       ctx.fill();
 
-      // Card border
-      ctx.strokeStyle = COLORS.accent;
+      // Glowing border
+      ctx.strokeStyle = 'rgba(100,200,255,0.6)';
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Card emoji
-      ctx.font = '24px Arial';
+      const emojiSize = Math.round(scs * 0.48);
+      ctx.font = `${emojiSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(CARD_EMOJIS[card.type], 0, 0);

@@ -73,4 +73,12 @@ export class Prop {
     if (count <= 0) return;
     this.currentUses = Math.min(this.currentUses + count, this.config.maxUses);
   }
+
+  /** Reset with new max uses (for level-specific scaling) */
+  resetUses(maxUses: number): void {
+    this.config.maxUses = maxUses;
+    this.currentUses = maxUses;
+    this.isOnCooldown = false;
+    this.cooldownTimer = 0;
+  }
 }
